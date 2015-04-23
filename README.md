@@ -20,7 +20,7 @@ To export your notes to Evernote:
 
 1. Run the following command in the Terminal:
 
-   php ./ibooks2evernote.php
+   php ibooks2evernote.php
   
 2. Open the newly created "iBooks exports for Evernote" folder from your
    home folder, open each file in there, Evernote will open and start 
