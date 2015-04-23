@@ -1,6 +1,6 @@
 <?php
 /*
- *	iBooks notes to Evernote converter
+ *  iBooks notes to Evernote converter
  *  by Joris Witteman <joris@jor.is>
  *  
  *  Reads the iBooks Annotations library on your Mac and exports
@@ -9,7 +9,7 @@
  *
  *  Usage:
  *  
- *	Move this script to the top of your personal home directory on your Mac.
+ *  Move this script to the top of your personal home directory on your Mac.
  *  This is the folder that has your name, which the Finder opens if you
  *  click on the Finder icon in the Dock.
  *
@@ -150,6 +150,8 @@ $notesdb->close();
 if(count($notes)==0) die("No notes found in your library. Have you added any to iBooks?\n\nIf you did on other devices than this Mac, make sure to enable iBooks notes/bookmarks syncing on all devices.");
 
 
+// Create a new directory and cd into it
+
 mkdir(RESULT_DIRECTORY_NAME);
 chdir(RESULT_DIRECTORY_NAME);
 
@@ -163,28 +165,46 @@ foreach($notes as $AssetID => $booknotes){
 	<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export3.dtd">
 	<en-export export-date="'.@strftime('%Y%m%dT%H%M%S',time()).'" application="iBooks2Evernote" version="iBooks2Evernote Mac 0.0.1">';
 
-	$Title  = $books[$AssetID]['Title'];
-
+	$BookTitle  = $books[$AssetID]['Title'];
+	
 	$j = 0;
 
 	foreach($booknotes as $note){
 		
-		if(empty($note['BroaderText']?$note['BroaderText']:$note['SelectedText'])) continue;
+		$CappedText = null;
+		$TextWithContext = null;
+				
+		// Skip empty notes
+		if(strlen($note['BroaderText']?$note['BroaderText']:$note['SelectedText'])==0) continue;
 		
+		$HighlightedText = $note['SelectedText'];
+		
+		// Cap the titles to 255 characters or Evernote will blank them.
+
+		if(strlen($HighlightedText)>255) $CappedText = substr($note['SelectedText'],0,254)."…";
+		
+		// If iBooks stored the surrounding paragraph of a highlighted text, show it and make the highlighted text show as highlighted.
+		if(!empty($note['BroaderText']) && $note['BroaderText'] != $note['SelectedText']){
+			$TextWithContext = str_replace($note['SelectedText'],"<span style=\"background: yellow;\">".$note['SelectedText']."</span>",$note['BroaderText']);
+		}
+		
+		// Keep some counters for commandline feedback
 		if($j==0)$b++;
 		$i++;
 		$j++;
 		
+		// Put it in Evernote's ENEX format.
 		$Body .='
-<note><title>'.($note['BroaderText']?$note['BroaderText']:$note['SelectedText']).'</title><content><![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<note><title>'.($CappedText?$CappedText:$HighlightedText).'</title><content><![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
 <en-note>
-<div><span style="color: rgb(169, 169, 169);"><span style="font-size: 12px;">From chapter: '.$note['Chapter'].'</span></span></div>
+<div>
+<p>'.($TextWithContext?$TextWithContext:$HighlightedText).'</p>
+<p><span style="color: rgb(169, 169, 169);font-size: 12px;">From chapter: '.$note['Chapter'].'</span></p>
+</div>
 <div>'.$note['Note'].'</div>
 </en-note>
-]]></content><created>'.@strftime('%Y%m%dT%H%M%S',@strtotime("2001-01-01 +". $note['Created']." seconds")).'</created><updated>'.@strftime('%Y%m%dT%H%M%S',@strtotime("2001-01-01 +". $note['Modified']." seconds")).'</updated><tag>'.$Title.'.</tag><note-attributes><author>joris@jor.is</author><source>desktop.mac</source><reminder-order>0</reminder-order></note-attributes></note>';
-
-
+]]></content><created>'.@strftime('%Y%m%dT%H%M%S',@strtotime("2001-01-01 +". ((int)$note['Created'])." seconds")).'</created><updated>'.@strftime('%Y%m%dT%H%M%S',@strtotime("2001-01-01 +". ((int)$note['Modified'])." seconds")).'</updated><tag>'.$BookTitle.'.</tag><note-attributes><author>joris@jor.is</author><source>desktop.mac</source><reminder-order>0</reminder-order></note-attributes></note>';
 
 	}
 	
@@ -192,7 +212,7 @@ foreach($notes as $AssetID => $booknotes){
 	</en-export>
 	';
 	
-	file_put_contents($Title.".enex", $Body);
+	file_put_contents($BookTitle.".enex", $Body);
 }
 
 echo "Done! Exported $i notes into $b separate export files in the '".RESULT_DIRECTORY_NAME."' folder.\n\n";
