@@ -25,3 +25,5 @@ To export your notes to Evernote:
 2. Open the newly created "iBooks exports for Evernote" folder from your
    home folder, open each file in there, Evernote will open and start 
    importing your notes.
+
+Background: https://jor.is/en/blog/2015/04/22/ibooks-notes-evernote/
