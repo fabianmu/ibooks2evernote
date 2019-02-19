@@ -164,7 +164,7 @@ foreach($notes as $AssetID => $booknotes){
 		$Body .= "## $HighlightedText\n";
 		$Body .= "###### Date: " . @strftime('%d-%m-%Y %H%:%M',@strtotime("2001-01-01 +". ((int)$note['Created'])." seconds")) . "\n";
 		if (!empty($note['Note'])) {
-			$Body .= "> Note: " . $note['Note'] . "\n";
+			$Body .= "> Note: " . $note['Note'] . "\n\n";
 		}
 		if (!empty($note['BroaderText']) && $note['BroaderText'] != $note['SelectedText']) {
 			$Body .= "###### Context: " . $note['BroaderText'] . "\n";
@@ -173,7 +173,7 @@ foreach($notes as $AssetID => $booknotes){
 			$Body .= "###### Chapter: " . $note['Chapter'] . "\n";
 		}
 
-		$Body .= "---\n\n";
+		$Body .= "\n---\n\n";
 	}
 	file_put_contents($BookTitle.".md", $Body);
 }
