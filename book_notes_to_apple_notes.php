@@ -190,15 +190,15 @@ foreach($notes as $AssetID => $booknotes){
 		$j++;
 		
 		$Body .= "<h3>$HighlightedText</h3><br>\n";
-		$Body .= "<div>\n";
-		if (!empty($note['Note'])) {
-			$Body .= "<p style=\"color: #707070\">Note: <i>" . $note['Note'] . "</i></p>\n";
-		}
-		if (!empty($note['BroaderText']) && $note['BroaderText'] != $note['SelectedText']) {
-			$Body .= "<p style=\"color: #707070\">Context: <i>" . $note['BroaderText'] . "</i></p>\n";
+        $Body .= "<div>\n";
+        if (!empty($note['Note'])) {
+			$Body .= "<p style=\"white-space: pre; color: #707070\">Note: <i>" . $note['Note'] . "</i></p>\n";
 		}
 		if (!empty($note['Chapter'])) {
 			$Body .= "<p style=\"color: #707070\">Chapter: <i>" . $note['Chapter'] . "</i></p>\n";
+        }
+        if (!empty($note['BroaderText']) && trim($note['BroaderText']) != trim($note['SelectedText'])) {
+			$Body .= "<p style=\"color: #808080; font-size: 9px\">Broader Text: <i>" . $note['BroaderText'] . "</i></p>\n";
 		}
 		$Body .= "<p style=\"color: #707070; font-size: 10px\">Highlighted at: <i>" . @strftime("%d-%m-%Y %H%:%M",@strtotime("2001-01-01 +". ((int)$note["Created"])." seconds")) . "</i></p>\n";
 		$Body .= "</div>\n<br>\n<br>\n";
