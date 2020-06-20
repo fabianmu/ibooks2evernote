@@ -19,5 +19,7 @@ Export your Apple book (iBooks) notes to Markdown Files
    
  2. Open the newly created "export"
 
+ Uses https://github.com/martinfinke/xcall/pull/6 to handle bear.app bear://x-callback-url URLS
+
 
 Background: https://jor.is/en/blog/2015/04/22/ibooks-notes-evernote/
