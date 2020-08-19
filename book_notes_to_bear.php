@@ -96,30 +96,34 @@ function slugify($text)
     return $text;
 }
 
-function getNoteContent($identifier)
+function getNoteContent($title, $identifier)
 {
-    exec('xcall.app/Contents/MacOS/xcall -url "bear://x-callback-url/open-note?id=' . $identifier . '" > tmp', $output);
-    $noteContent = file_get_contents('tmp');
+    $sluggedIdentifier = slugify("notecontent-$title");
+    exec('xcall.app/Contents/MacOS/xcall -url "bear://x-callback-url/open-note?id=' . $identifier . '" > runfiles/' . $sluggedIdentifier, $output);
+    $noteContent = file_get_contents("runfiles/$sluggedIdentifier");
     return json_decode($noteContent)->note;
 }
 
 function createNote($title, $slug, $content)
 {
-    exec('xcall.app/Contents/MacOS/xcall -url "bear://x-callback-url/create?title=Book%3A%20' . rawurlencode($title) . '&text=' . rawurlencode($content) . '" tmp', $output);
-    $noteContent = file_get_contents('tmp');
+    $sluggedIdentifier = slugify(substr($content, 0, 200));
+    exec('xcall.app/Contents/MacOS/xcall -url "bear://x-callback-url/create?title=Book%3A%20' . rawurlencode($title) . '&text=' . rawurlencode($content) . '" > runfiles/' . $sluggedIdentifier, $output);
+    $noteContent = file_get_contents("runfiles/$sluggedIdentifier");
     sleep(1);
     return json_decode($noteContent);
 }
 
 function addNote($identifier, $annotation)
 {
-    exec('xcall.app/Contents/MacOS/xcall -url "bear://x-callback-url/add-text?id=' . $identifier . '&mode=append&text=' . rawurlencode($annotation) . '" > tmp', $output);
+    $sluggedIdentifier = slugify(substr($annotation, 0, 200));
+    exec('xcall.app/Contents/MacOS/xcall -url "bear://x-callback-url/add-text?id=' . $identifier . '&mode=append&text=' . rawurlencode($annotation) . '" > runfiles/' . $sluggedIdentifier, $output);
 }
 
 function searchBook($title)
 {
-    exec('xcall.app/Contents/MacOS/xcall -url "bear://x-callback-url/search?term=Book%3A%20' . rawurlencode($title) . '&show_window=no&token=' . BEAR_APP_TOKEN . '" > tmp', $output, $return_var);
-    $searchResult = file_get_contents('tmp');
+    $sluggedIdentifier = slugify($title);
+    exec('xcall.app/Contents/MacOS/xcall -url "bear://x-callback-url/search?term=Book%3A%20' . rawurlencode($title) . '&show_window=no&token=' . BEAR_APP_TOKEN . '" > runfiles/' . $sluggedIdentifier, $output, $return_var);
+    $searchResult = file_get_contents("runfiles/$sluggedIdentifier");
     $searchResult = json_decode($searchResult);
     $bearBooks = json_decode($searchResult->notes);
     if (count($bearBooks) == 0) {
@@ -133,7 +137,7 @@ function searchBook($title)
 
 $books = array();
 $booksdb = new MyDB(BOOKS_DATABASE_FILE);
-
+@mkdir("runfiles");
 if (!$booksdb) {
     echo $booksdb->lastErrorMsg();
 }
@@ -205,10 +209,14 @@ foreach ($notes as $AssetID => $booknotes) {
     $bearBookContent = "";
     if ($bearBook) {
         echo $bookTitle . " exists, adding\n";
-        $bearBookContent = getNoteContent($bearBook->identifier);
+        $bearBookContent = getNoteContent($bookTitle, $bearBook->identifier);
     } else {
         echo $bookTitle . " is new\n";
     }
+    // if ($bookTitle != 'Why We Sleep') {
+    //     echo "skipping";
+    //     continue;
+    // }
 
     foreach ($booknotes as $note) {
         // Skip empty notes
@@ -237,7 +245,7 @@ foreach ($notes as $AssetID => $booknotes) {
 
         if (!$bearBook) {
             $bearBook = createNote($bookTitle, $slug, $header);
-            $bearBookContent = getNoteContent($bearBook->identifier);
+            $bearBookContent = getNoteContent($bookTitle, $bearBook->identifier);
         }
 
         if (strpos($bearBookContent, $annotation) === false) {
